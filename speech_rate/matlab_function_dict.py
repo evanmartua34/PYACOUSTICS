@@ -483,6 +483,7 @@ def fu_pause_detector(s,opt):
 	t = np.array([[0,0],[0,0]])
 	j = 1
 	jarak = np.arange(0,ls,sts)
+	len(jarak)
 	for i in jarak :
 		yi = np.arange(i,(min(ls,i+ml - 1)))
 		yi = [int(n) for n in yi]
