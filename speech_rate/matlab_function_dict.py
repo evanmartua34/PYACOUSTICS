@@ -6,6 +6,7 @@ import math
 import scipy
 import scipy.signal
 import statistics
+import time
 class struct_1():
 	def _init_(self):
 		struct_1.a= None
@@ -128,8 +129,6 @@ def detect_syllable_nuclei(path_to_files, output_path):
 		name , tossExt = os.path.splitext(files[i])
 		tossPath = path_to_files
 		y,fs = sf.read(os.path.join(path_to_files,files[i]))
-		print('ini diaaaaa si yy')
-		print(y)
 		#opt = opt_class()
 		opt = {}
 		opt['fs']=fs
@@ -138,10 +137,13 @@ def detect_syllable_nuclei(path_to_files, output_path):
 		sn = np.array(sn)
 		sn.astype(float)
 		sn = sn / fs
-		
-		output_fn = output_path + name + '.txt'
-		fd = open(output_fn,"w")
-		fd.write('\n sn')
+		sn.tolist()
+		output_fn = output_path +'/'+name + '.txt'
+		fd = open(output_fn,"w+")
+		for i in range(0,len(sn)):
+			print(sn[i])
+			tulis = float(sn[i])
+			fd.write("\n %f" %tulis)
 		fd.close()
 
 def fu_sylncl(s,opt):
@@ -162,7 +164,8 @@ def fu_sylncl(s,opt):
 		opt['unv'] = fu_optstruct_init(opt['unv'], ['sts'], [1])
 		sn=fu_sylncl_sub(s,opt)
 		#if (nargout>1)
-		sb=fu_sylbnd(s,sn,opt)
+		#sb=fu_sylbnd(s,sn,opt)
+	
 	else:
 		##s_glob=s
 		##opt_glob=opt
@@ -181,12 +184,12 @@ def fu_sylncl(s,opt):
 		#for i in sn; 
 			#plot([i i],[-1 1],'-r'); end
 		# if nargout>1
-		satu = np.arange(-1, 1)
-		i2=[]
-		for i in sb:
-			i2.append(i)
-			i3=np.array(i2)
-			plt.plot(i3,satu,'-g')
+		#satu = np.arange(-1, 1)
+		#i2=[]
+		#for i in sb:
+		#	i2.append(i)
+		#	i3=np.array(i2)
+		#	plt.plot(i3,satu,'-g')
 
 	if (opt['do'] == 'train'):
 		opt['do']='apply'
@@ -194,12 +197,12 @@ def fu_sylncl(s,opt):
 		sn = opt
 		sn['opt'] = opt
 		#save('sn_opt','sn_opt');
-	return sn, sb
+	return sn #,sb
 
 	
 def fu_optstruct_init(opt, optfields, optdefaults):
 	for n in range(0,len(optfields)):
-		if not (hasattr(opt,optfields[n])):
+		if not(optfields[n] in opt):
 			if (not(type(optdefaults[n]) == int or type(optdefaults[n]) == float)  ) and (optdefaults[n] == 'oblig'):
 				raise ValueError('opt field "%s" has to be defined by the user!',optfields[n])
 			opt[optfields[n]] = optdefaults[n]
@@ -217,37 +220,31 @@ def fu_sylncl_sub(s,opt):
 	t_nou_pau =np.array([])
 	voi = np.array([])
 	t_nou = np.array([[]])
-	if hasattr(opt,'nouse_int'):
-		t_nou_init = np.array([opt['nouse_int']])
+
+	if 'nouse_int'in opt:
+		t_nou_init = np.array([[opt['nouse_int']]])
 	if opt['do_nouse']>0:
 		if (opt['do_nouse'] < 3):
 			t_nou_pau = np.array(fu_pause_detector(s,opt['pau']))
+			
 		if (opt['do_nouse'] == 1 or opt['do_nouse']==3):
 			voi,zrr = fu_voicing(s, opt['fs'], opt['unv'])
+			
 	for i in range(0,t_nou_init.shape[0]):
 		#t_nou = [t_nou, t_nou_init_init[i,1:2]]  #line 40 
 		#t_nou.append(t_nou_init[i,0:1])
-		t_nou = np.column_stack((t_nou, t_nou_init[i,0:2]))
-	print('AWALNYA')
-	print('-----------------')
-	#t_nou=numpy.array([t_nou])
-	print(t_nou_pau.shape)
-	print('-----------------')
+		
+		if t_nou_init.shape[1]>1:
+			t_nou = np.column_stack((t_nou, t_nou_init[i,0:2]))
+	
 	for i in range(0,t_nou_pau.shape[0]):
 		#t_nou = [t_nou, t_nou_pau[i,1:2]]
 		#t_nou.append(t_nou_pau[i,0:1]) #cek lagi
-		print('cek yang mau ditambah')
-		print('ke-',i)
-		print('------------------------')
-		t_pau_tambah = np.array([t_nou_pau[i,0:2]])
-		print('CEKKKKKKKKKK')
-		print(t_pau_tambah.shape)
-		print(t_nou_pau)
-		print('-------------------------')
+		
+		t_pau_tambah = np.arange(t_nou_pau[i,0],t_nou_pau[i,1]+1)
+		t_pau_tambah.tolist()
+		t_pau_tambah = np.array([t_pau_tambah])
 		t_nou = np.column_stack((t_nou, t_pau_tambah))
-	print('---------------------')
-	print(t_nou.shape)
-	print('----------------------')
 	tambah = np.where(voi==0)
 	tambahbaru = tambah[0]
 	tambahtrans = tambahbaru.reshape(1,len(tambahbaru))
@@ -255,7 +252,6 @@ def fu_sylncl_sub(s,opt):
 	np.column_stack((t_nou,tambah))
 	
 	t_nou = np.unique(np.transpose(np.array(t_nou)))
-	
 	if len(opt['bf']) == 1 :
 		ft='low'
 	else :
@@ -298,31 +294,24 @@ def fu_sylncl_sub(s,opt):
 	all_e = np.array(e_y2)
 	all_r = np.array(e_rw2)
 	
-	print('SIZE all_e')
-	print('-------------------')
-	print(all_e.shape)
-	print('-------------------')
-	
-	print('SIZE all_r')
-	print('-------------------')
-	print(all_r.shape)
-	print('-------------------')
-	
 	#lmopt =struct 
 	lmopt = {}
 	lmopt['peakmpd'] = math.floor(opt['fs'] * opt['md']/ sts)
 	pks, idx = fu_locmax(all_e, lmopt)
 	t = []
-	print('-----------------------')
-	print('INDEKS')
-	print(idx)
-	print('------------------------')
+	
+	
 	for i in idx:
-		if ((all_e[i] >= ((all_r[i]) * (opt['f_thresh']))) and (all_e[i] > e_min)):
-			cek = np.where(t_nou == all_i[i])
+		if ((all_e[i-1] >= ((all_r[i-1]) * (opt['f_thresh']))) and (all_e[i-1] > e_min)):
+			cek = np.where(t_nou == all_i[i-1])
 			if len(cek[0]) == 0 :
-				t.append(all_i[i])
+				t.append(all_i[i-1])
 	t=np.array(t)
+	
+	print('cek T')
+	print('====================')
+	print(t)
+	print('====================')
 	return t 
 	
 	
@@ -367,7 +356,7 @@ def fu_sylbnd(s, sn ,opt):
 	ml = math.floor(opt['length'] * opt['fs'])
 	sts = max(1, math.floor(0.03 *opt['fs']))
 	sb = []
-	for i in range (1,len(sn)):
+	for i in range (0,len(sn)-1):
 		on = sn[i]
 		off = sn[i+1]
 		sw = s[on:off]
@@ -399,8 +388,10 @@ def fu_locmax(y,opt):
 	#if nargin<2; opt=struct; end
 	struct_3 = {}
 	struct_4 = {}
+	print('cek size')
+	print(y.shape)
 	opt = fu_optstruct_init(opt,['smooth', 'peak'], [struct_3, struct_4])
-	opt['smooth'] = fu_optstruct_init(opt['smooth'], ['win', 'mtd', 'order'], [float(1), 'none', float(1)])
+	opt['smooth'] = fu_optstruct_init(opt['smooth'], ['win', 'mtd', 'order'], [float(1), 'None', float(1)])
 	opt['peak']=fu_optstruct_init(opt['peak'],['mph', 'th', 'mpd'],[float('-inf'), float(0), float(1)]);
 	opt['peak']['mpd'] = min(opt['peak']['mpd'] , float(len(y)-1))
 	idx = scipy.signal.find_peaks(fu_smooth(y,opt['smooth']),distance = opt['peak']['mpd'], height = opt['peak']['mph'], threshold = opt['peak']['th'])
@@ -414,7 +405,7 @@ def fu_locmax(y,opt):
 	print('------------------')
 
 	idx = [int(n) for n in idx]
-	pks = [ys[k] for k in idx]
+	pks = [ys[k-1] for k in idx]
 	
 	if len(pks)==0 :
 		idx = scipy.signal.find_peaks(y)
@@ -425,20 +416,20 @@ def fu_locmax(y,opt):
 	if ((y2.shape)[1]==1):
 		pks = fu_r2c(pks)
 		idx = fu_r2c(idx)
-	
 	return pks, idx
 	
 def fu_rmse(*args):
-	if len(args) <= 2:
+	if len(args) < 2:
 		x=np.array(args)
 		x.astype(float)
-		e= math.sqrt(np.sum(x**2)/len(x));
+		e= math.sqrt(np.sum(x**2)/len(x[0]));
 	else:
 		x=np.array(args[0])
 		y=np.array(args[1])
 		x.astype(float)
 		y.astype(float)
 		e = math.sqrt(np.sum((x-y)**2)/len(x));
+
 	return e
 
 def fu_i_window(i,wl,l):
@@ -462,15 +453,15 @@ def fu_i_window(i,wl,l):
 def fu_smooth(y,opt):
 	#if nargin<1; opt=struct; end
 	#if opt['mtd'] == 'None':
-	opt = fu_optstruct_init(opt,['mtd', 'wl', 'order'],['None', 5, 3])
+	opt = fu_optstruct_init(opt,['mtd', 'wl', 'order'],['mova', 5, 3])
 	#mova
 	#else :
 	#	opt = fu_optstruct_init(opt,['mtd', 'wl', 'order'],['mova', 5, 3])
 	if (opt['mtd'] == 'None'):
 		ys = y
-	#else if (not(opt.mtd == 'sgolay')):
-		#ys = smooth(y,opt.wl, opt.mtd)
-	else :
+	elif (not(opt.mtd == 'sgolay')):
+		ys = smooth(y,opt.wl, opt.mtd)
+	else:
 		#ys = smooth(y, opt.wl, opt.mtd , opt.order)	
 		ys = smooth(y)
 	return ys
@@ -552,23 +543,26 @@ def fu_pause_detector(s,opt):
 	s = fu_filter(s,'low',10000, opt['fs'],5)
 	rws = math.floor(opt['rlength'] * opt['fs'])
 	ls = len(s)
+
 	ml = math.floor(opt['length'] * opt['fs'])
 	e_glob = fu_rmse(s)
+	
+	
 	t_glob = opt['f_thresh'] * e_glob
 	sts = max(1, math.floor(0.05 * opt['fs']))
+	
 	stsh = math.floor(sts/2)
 	t = np.array([])
-	print('SIZE T AWAL ')
-	print('-----------------')
-	print(t.shape)
-	print('-----------------')
+	
 	j = 1
 	jarak = np.arange(0,ls,sts)
 	len(jarak)
 	for i in jarak :
-		yi = np.arange(i,(min(ls,i+ml - 1)))
+		i = i+1
+		yi = np.arange(i,(min(ls,i+ml - 1))+1)
 		yi = [int(n) for n in yi]
-		y = [s[k] for k in yi]
+		y = [s[k-1] for k in yi]
+		
 		e_y = fu_rmse(y)
 		
 		rwi = fu_i_window(min(i+stsh,ls),rws,ls)
@@ -578,18 +572,9 @@ def fu_pause_detector(s,opt):
 		#rw = s[fu_i_window(min(i+stsh,ls),rws,ls)]
 		e_rw = fu_rmse(rw)
 		if e_y <= e_rw * opt['f_thresh']:
-			print('NILAI T')
-			print('-------------------')
-			print(t.shape[0])
-			print('-------------------')
-			print('NILAI j')
-			print('------------------')
-			print(j)
+			
 			if(t.shape[0] ==j):
-				print('CEK SHAPE ERROR T')
-				print('-----------------')
-				print(t.shape)
-				print(t)
+				
 				if yi[0] < t[j-1][1]:
 					#t[j,1] =  yi(-1)
 					#np.row_stack((t[j-1][1],yi(-1))
@@ -600,27 +585,24 @@ def fu_pause_detector(s,opt):
 					#t[j-1,0:2] = np.column_stack((yi[0] , yi[-1]))
 					t = np.row_stack((t,tambahan_baris))
 			else:
+				
 				ytambah = [yi[0]]
 				ytambah.append(yi[-1]) 
 				ytambah = np.array([ytambah])
-				print('SHAPE T')
-				print(t.shape)
-				print('SHAPE YTAMBAH')
-				print(ytambah.shape)
+				
+				
 				#t[j,:] = ytambah
 				if (t.shape[0] ==0):
 					t = ytambah
+					print('nilai t')
+					print(t)
 				else:
 					if(t.shape[1] == 0):
 						t = ytambah
 					np.column_stack((t,ytambah))
-				print('size t baru ')
-				print(t.shape)
+				
 				#t[j,:] = [yi[1], yi[-1]]
+	
 	if (opt['ret'] == 's'):
 		t=t/opt['fs']
-	print('DIAPKEEEEEEEEEEEEEEE')
-	print('------------------------------')
-	print(t)
-	print('-------------------------------')
 	return t
